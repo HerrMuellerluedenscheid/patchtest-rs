@@ -1,5 +1,5 @@
 use anyhow::{Context, Ok, Result};
-use checks::{ApplyPatch, CheckRepo, LintPatch, PatchError, Summary};
+use checks::{ApplyPatch, CheckRepo, Level, LintPatch, PatchError, Summary};
 use report::report_terminal;
 use std::path::Path;
 use structopt::StructOpt;
@@ -20,18 +20,33 @@ pub struct Args {
     arg_patch_path: String,
 }
 
+pub struct LintResult {
+    result: Result<String, PatchError>,
+    level: Level,
+}
+
 fn main() -> Result<()> {
     let args = Args::from_args();
-    let mut errors: Vec<Result<String, PatchError>> = vec![];
+    let mut results = vec![];
 
     let patch_path = Path::new(&args.arg_patch_path);
     let patch = Patch::from_file(patch_path);
-    errors.push(Summary::check(&patch));
+    let summary = Summary {
+        level: Level::Warning,
+    };
+    let result = LintResult {
+        result: Summary::check(&patch),
+        level: summary.level,
+    };
+    results.push(result);
 
     let repo = git_fetch(&args).context(format!("Failed when trying to fetch {}", args.arg_url))?;
-    let error = ApplyPatch::apply(repo, &patch);
-    errors.push(error);
-    report_terminal(errors);
+    let result = LintResult {
+        result: ApplyPatch::apply(repo, &patch),
+        level: Level::Warning,
+    };
+    results.push(result);
+    report_terminal(&results);
 
     Ok(())
 }

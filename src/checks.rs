@@ -25,8 +25,26 @@ pub(crate) trait LintPatch {
     fn check(patch: &Patch) -> Result<String, PatchError>;
 }
 
-pub struct ApplyPatch;
-pub struct Summary;
+#[derive(Debug)]
+pub enum Level {
+    Warning,
+    Error,
+}
+
+pub fn icon(level: &Level) -> &'static str {
+    match level {
+        Level::Error => "❌",
+        Level::Warning => "⚠",
+    }
+}
+
+pub struct ApplyPatch {
+    pub level: Level,
+}
+
+pub struct Summary {
+    pub level: Level,
+}
 
 impl CheckRepo for ApplyPatch {
     /// Applies the patch and wrappes failures in a PatchError
@@ -60,7 +78,7 @@ fn test_summary() {
     }
 
     fn is_ok_patch_file(path_str: &str) {
-        let patch = Patch::from_file( Path::new(path_str));
+        let patch = Patch::from_file(Path::new(path_str));
         assert!(Summary::check(&patch).is_ok());
     }
 
