@@ -1,4 +1,5 @@
 use git2::{ApplyOptions, Repository};
+use serde::{Deserialize, Serialize};
 
 use crate::patch::Patch;
 use thiserror::Error;
@@ -17,7 +18,7 @@ pub enum PatchError {
 
 /// Validations on a cloned repository
 pub(crate) trait CheckRepo {
-    fn apply(repo: Repository, patch: &Patch) -> Result<String, PatchError>;
+    fn apply(repo: &Repository, patch: &Patch) -> Result<String, PatchError>;
 }
 
 /// Validations of a patch
@@ -25,7 +26,7 @@ pub(crate) trait LintPatch {
     fn check(patch: &Patch) -> Result<String, PatchError>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Level {
     Warning,
     Error,
@@ -38,17 +39,41 @@ pub fn icon(level: &Level) -> &'static str {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct ApplyPatch {
     pub level: Level,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Summary {
     pub level: Level,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Config<T, U>
+where
+    T: LintPatch,
+    U: CheckRepo,
+{
+    lints: Vec<T>,
+    checks: Vec<U>,
+}
+
+pub fn print_config() {
+    let config = Config {
+        lints: vec![Summary {
+            level: Level::Error,
+        }],
+        checks: vec![ApplyPatch {
+            level: Level::Error,
+        }],
+    };
+    println!("config {:?}", serde_yaml::to_string(&config));
+}
+
 impl CheckRepo for ApplyPatch {
     /// Applies the patch and wrappes failures in a PatchError
-    fn apply(repo: Repository, patch: &Patch) -> Result<String, PatchError> {
+    fn apply(repo: &Repository, patch: &Patch) -> Result<String, PatchError> {
         let location = git2::ApplyLocation::WorkDir;
         let options = &mut ApplyOptions::new();
         repo.apply(&patch.diff, location, Some(options))

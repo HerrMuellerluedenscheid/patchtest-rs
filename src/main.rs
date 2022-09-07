@@ -1,5 +1,5 @@
 use anyhow::{Context, Ok, Result};
-use checks::{ApplyPatch, CheckRepo, Level, LintPatch, PatchError, Summary};
+use checks::{print_config, ApplyPatch, CheckRepo, Level, LintPatch, PatchError, Summary};
 use report::report_terminal;
 use std::path::Path;
 use structopt::StructOpt;
@@ -42,11 +42,12 @@ fn main() -> Result<()> {
 
     let repo = git_fetch(&args).context(format!("Failed when trying to fetch {}", args.arg_url))?;
     let result = LintResult {
-        result: ApplyPatch::apply(repo, &patch),
+        result: ApplyPatch::apply(&repo, &patch),
         level: Level::Warning,
     };
     results.push(result);
     report_terminal(&results);
 
+    print_config();
     Ok(())
 }
