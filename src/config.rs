@@ -2,10 +2,11 @@ use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-use crate::checks::Level;
+use crate::checks::{mbox_author::InvalidAuthors, Level};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
+    pub invalid_authors: InvalidAuthors,
     pub levels: HashMap<String, Level>,
 }
 
@@ -24,6 +25,12 @@ pub fn load_config(filename: &Path) -> Config {
 
 pub fn print_config() {
     let levels: HashMap<String, Level> = HashMap::new();
-    let config = Config { levels };
-    println!("{}", serde_yaml::to_string(&config).unwrap());
+    let invalid_authors = InvalidAuthors {
+        regular_expressions: vec!["example".to_owned()],
+    };
+    let config = Config {
+        levels,
+        invalid_authors,
+    };
+    print!("{}", serde_yaml::to_string(&config).unwrap());
 }

@@ -48,8 +48,7 @@ impl Header {
         let summary = extractions["summary"].clone();
         let signature = extractions["signature"].clone();
 
-        let mut signatures = Vec::new();
-        signatures.push(signature);
+        let signatures = vec![signature];
 
         Header {
             from,

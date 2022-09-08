@@ -1,8 +1,8 @@
 use crate::checks::run_all_tests;
 use anyhow::{Context, Ok, Result};
-use config::{load_config, Config};
+use config::{load_config, print_config, Config};
 use report::report_terminal;
-use std::path::Path;
+use std::{path::Path, process::exit};
 use structopt::StructOpt;
 mod checks;
 mod config;
@@ -23,21 +23,31 @@ pub struct Args {
     #[structopt(name = "patch")]
     arg_patch_path: String,
 
-    #[structopt(name = "config")]
-    arg_config: Option<String>,
+    #[structopt(long)]
+    config: Option<String>,
+
+    #[structopt(long)]
+    print_config: bool,
 }
 
 fn main() -> Result<()> {
     let args = Args::from_args();
+
+    if args.print_config {
+        print_config();
+        exit(0);
+    };
+
     let mut config = Config::default();
-    let arg_config = &args.arg_config.clone().unwrap_or_default();
+
+    let arg_config = &args.config.clone().unwrap_or_default();
     if !arg_config.is_empty() {
         config = load_config(Path::new(&arg_config));
     }
     let repo = git_fetch(&args).context(format!("Failed when trying to fetch {}", args.arg_url))?;
     let patch = Patch::from_file(Path::new(&args.arg_patch_path));
 
-    let results = run_all_tests(patch, &repo);
+    let results = run_all_tests(patch, &repo, &config);
 
     report_terminal(results, &config);
 

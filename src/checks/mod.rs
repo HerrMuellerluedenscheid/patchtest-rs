@@ -1,19 +1,25 @@
 use git2::{ApplyOptions, Repository};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::patch::Patch;
+use crate::{config::Config, patch::Patch};
 use thiserror::Error;
+
+use self::mbox_author::test_author_valid;
+
+pub mod mbox_author;
 
 #[derive(Debug)]
 pub struct TestMetaInfo {
     pub name: String,
 }
 
-pub fn run_all_tests(patch: Patch, repo: &Repository) -> Vec<LintResult> {
-    let mut results = vec![];
-    results.push(check_summary(&patch));
-    results.push(apply_patch(repo, &patch));
-    results
+pub fn run_all_tests(patch: Patch, repo: &Repository, config: &Config) -> Vec<LintResult> {
+    vec![
+        check_summary(&patch),
+        apply_patch(repo, &patch),
+        test_author_valid(&patch, &config.invalid_authors),
+    ]
 }
 
 /// PatchError enumerates all possible errors returned by this library.
@@ -26,6 +32,9 @@ pub enum PatchError {
     /// Header field
     #[error("Header field is missing")]
     HeaderFieldError { message: String },
+
+    #[error("Found an invalid author")]
+    AuthorError { matches: Vec<Regex> },
 }
 
 pub struct LintResult {
