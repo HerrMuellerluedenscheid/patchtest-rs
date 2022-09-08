@@ -1,7 +1,16 @@
 use crate::{
-    checks::{icon, LintResult},
+    checks::{Level, LintResult},
     config::Config,
 };
+
+/// map error levels to icons
+pub fn icon(level: &Level) -> &'static str {
+    match level {
+        Level::Skip => "s",
+        Level::Error => "❌",
+        Level::Warning => "⚠",
+    }
+}
 
 /// print error report to console
 pub fn report_terminal(lint_results: Vec<LintResult>, config: &Config) {

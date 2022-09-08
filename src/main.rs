@@ -1,8 +1,6 @@
+use crate::checks::run_all_tests;
 use anyhow::{Context, Ok, Result};
-use checks::{ApplyPatch, CheckRepo, LintPatch, LintResult, Summary};
-
 use config::{load_config, Config};
-use git2::Repository;
 use report::report_terminal;
 use std::path::Path;
 use structopt::StructOpt;
@@ -27,13 +25,6 @@ pub struct Args {
 
     #[structopt(name = "config")]
     arg_config: Option<String>,
-}
-
-fn run_all_tests(patch: Patch, repo: &Repository) -> Vec<LintResult> {
-    let mut results = vec![];
-    results.push(Summary::check(&patch));
-    results.push(ApplyPatch::apply(repo, &patch));
-    results
 }
 
 fn main() -> Result<()> {
