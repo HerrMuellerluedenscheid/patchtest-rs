@@ -1,13 +1,17 @@
-use crate::{checks::icon, LintResult};
+use crate::{
+    checks::{icon, LintResult},
+    config::Config,
+};
 
 /// print error report to console
-pub fn report_terminal(lint_results: &[LintResult]) {
+pub fn report_terminal(lint_results: Vec<LintResult>, config: &Config) {
     for lint_result in lint_results.iter() {
-        let result = &lint_result.result;
-        let icon = icon(&lint_result.level);
-        match result {
-            Ok(name) => println!("✅ {}", name),
-            Err(error) => println!("{} {} ({:?})", icon, error, error),
+        match &lint_result.test_result {
+            Ok(()) => println!("✅ {}", &lint_result.meta_info.name),
+            Err(error) => {
+                let icon = icon(config.get_error_level(&lint_result.meta_info.name));
+                println!("{} {} ({:?})", icon, error, error)
+            }
         }
     }
 }
