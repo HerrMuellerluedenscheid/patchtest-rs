@@ -49,7 +49,7 @@ fn main() -> Result<()> {
 
     let results = run_all_tests(patch, &repo, &config);
 
-    report_terminal(results, &config);
+    report_terminal(&results, &config);
 
     Ok(())
 }

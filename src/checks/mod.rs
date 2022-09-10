@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::{config::Config, patch::Patch};
 use thiserror::Error;
 
-use self::mbox_author::test_author_valid;
+use self::{commit_message::check_commit_message, mbox_author::test_author_valid};
 
+pub mod commit_message;
 pub mod mbox_author;
 
 #[derive(Debug)]
@@ -14,9 +15,9 @@ pub struct TestMetaInfo {
     pub name: String,
 }
 
-pub fn run_all_tests(patch: Patch, repo: &Repository, config: &Config) -> Vec<LintResult> {
-    vec![
-        check_summary(&patch),
+pub fn run_all_tests(patch: Patch, repo: &Repository, config: &Config) -> [LintResult; 3] {
+    [
+        check_commit_message(&patch),
         apply_patch(repo, &patch),
         test_author_valid(&patch, &config.invalid_authors),
     ]
@@ -27,14 +28,14 @@ pub fn run_all_tests(patch: Patch, repo: &Repository, config: &Config) -> Vec<Li
 pub enum PatchError {
     /// Patch cannot be applied
     #[error("Patch cannot be applied. meta: {source}")]
-    ApplyError { source: git2::Error },
+    Apply { source: git2::Error },
 
     /// Header field
     #[error("Header field is missing")]
-    HeaderFieldError { message: String },
+    HeaderField { message: String },
 
     #[error("Found an invalid author")]
-    AuthorError { matches: Vec<Regex> },
+    Author { matches: Vec<Regex> },
 }
 
 pub struct LintResult {
@@ -58,46 +59,10 @@ pub fn apply_patch(repo: &Repository, patch: &Patch) -> LintResult {
     let options = &mut ApplyOptions::new();
     let result = repo
         .apply(&patch.diff, location, Some(options))
-        .map_err(|source| PatchError::ApplyError { source });
+        .map_err(|source| PatchError::Apply { source });
 
     LintResult {
         meta_info,
         test_result: result,
     }
-}
-
-/// Validate the message summary
-pub fn check_summary(patch: &Patch) -> LintResult {
-    let meta_info = TestMetaInfo {
-        name: "summary".to_owned(),
-    };
-    let mut result = Ok(());
-    if patch.header.summary.is_empty() {
-        result = Err(PatchError::HeaderFieldError {
-            message: "summary is empty".to_owned(),
-        });
-    }
-
-    LintResult {
-        meta_info,
-        test_result: result,
-    }
-}
-
-#[test]
-fn test_summary() {
-    use std::path::Path;
-
-    fn is_error_patch_file(path_str: &str) {
-        let patch = Patch::from_file(Path::new(path_str));
-        assert!(check_summary(&patch).test_result.is_err());
-    }
-
-    fn is_ok_patch_file(path_str: &str) {
-        let patch = Patch::from_file(Path::new(path_str));
-        assert!(check_summary(&patch).test_result.is_ok());
-    }
-
-    is_error_patch_file("tests/files/CommitMessage.test_commit_message_presence.fail");
-    is_ok_patch_file("tests/files/CommitMessage.test_commit_message_presence.pass");
 }

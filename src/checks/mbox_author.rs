@@ -19,7 +19,7 @@ pub fn test_author_valid(patch: &Patch, invalid: &InvalidAuthors) -> LintResult 
 
     let test_result = match result.is_empty() {
         true => Ok(()),
-        false => Err(PatchError::AuthorError { matches: result }),
+        false => Err(PatchError::Author { matches: result }),
     };
 
     LintResult {

@@ -22,7 +22,7 @@ pub struct Header {
 }
 
 impl Header {
-    fn from_string(header_string: String) -> Self {
+    fn from_string(header_string: &str) -> Self {
         let re = regex!(
             r"(?P<from>^From .+)\n(?P<author>From: .+)\n(?P<date>Date: .+)\n(?P<subject>Subject: .+)\n\n(?P<summary>.+\n\n)*(?P<signature>Signed-off-by: .+)\n"
         );
@@ -78,7 +78,7 @@ impl<'a> Patch<'a> {
         let header_match = re.find(text).unwrap();
         let start = header_match.start();
         let end = header_match.end();
-        let header = (&text[start..end]).to_owned();
+        let header = &text[start..end];
         let header = Header::from_string(header);
         Patch { header, diff }
     }

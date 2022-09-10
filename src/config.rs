@@ -11,7 +11,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_error_level(&self, name: &String) -> &Level {
+    pub fn get_error_level(&self, name: &str) -> &Level {
         self.levels.get(name).unwrap_or(&Level::Error)
     }
 }
