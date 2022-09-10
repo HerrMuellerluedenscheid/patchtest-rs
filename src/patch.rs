@@ -41,22 +41,13 @@ impl Header {
 
             extractions.insert(name, value);
         }
-        let from = extractions["from"].clone();
-        let author = extractions["author"].clone();
-        let date = extractions["date"].clone();
-        let subject = extractions["subject"].clone();
-        let summary = extractions["summary"].clone();
-        let signature = extractions["signature"].clone();
-
-        let signatures = vec![signature];
-
         Header {
-            from,
-            author,
-            date,
-            subject,
-            summary,
-            signatures,
+            from: extractions["from"].clone(),
+            author: extractions["author"].clone(),
+            date: extractions["date"].clone(),
+            subject: extractions["subject"].clone(),
+            summary: extractions["summary"].clone(),
+            signatures: vec![extractions["signature"].clone()],
         }
     }
 }
